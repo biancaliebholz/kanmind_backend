@@ -43,9 +43,12 @@ class Task(models.Model):
         blank=True,
         related_name="reviewed_tasks",
     )
-    due_date = models.DateField(
-        null=True,
-        blank=True,
+    created_by = models.ForeignKey(
+        settings.AUTH_USER_MODEL,
+        on_delete=models.CASCADE,
+        related_name="created_tasks",
     )
+    due_date = models.DateField()
+
     def __str__(self):
         return self.title
