@@ -44,6 +44,9 @@ INSTALLED_APPS = [
     "boards_app",
     "task_app",
 ]
+
+AUTH_USER_MODEL = "auth_app.User"
+
 MIDDLEWARE = [
     'django.middleware.security.SecurityMiddleware',
     'django.contrib.sessions.middleware.SessionMiddleware',
