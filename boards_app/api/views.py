@@ -4,6 +4,7 @@ from rest_framework.permissions import IsAuthenticated
 from rest_framework.response import Response
 from rest_framework.viewsets import ModelViewSet
 
+from boards_app.api.permissions import IsBoardMemberOrOwner
 from boards_app.api.serializers import (
     BoardCreateSerializer,
     BoardDetailSerializer,
@@ -14,7 +15,10 @@ from boards_app.models import Board
 
 
 class BoardViewSet(ModelViewSet):
-    permission_classes = [IsAuthenticated]
+    permission_classes = [
+        IsAuthenticated,
+        IsBoardMemberOrOwner,
+    ]
 
     def get_queryset(self):
         user = self.request.user
@@ -53,12 +57,8 @@ class BoardViewSet(ModelViewSet):
     def destroy(self, request, *args, **kwargs):
         board = self.get_object()
 
-        if board.owner != request.user:
-            return Response(
-                {"detail": "Only the board owner can delete this board."},
-                status=status.HTTP_403_FORBIDDEN,
-            )
-
         board.delete()
 
-        return Response(status=status.HTTP_204_NO_CONTENT)
+        return Response(
+            status=status.HTTP_204_NO_CONTENT,
+        )
