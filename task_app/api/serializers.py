@@ -57,40 +57,28 @@ class TaskSerializer(serializers.ModelSerializer):
         return obj.comments.count()
 
     def validate(self, attrs):
-        board = attrs.get(
-            "board",
-            getattr(self.instance, "board", None),
-        )
+        board = attrs.get("board", self._current_value("board"))
+        assignee = attrs.get("assignee", self._current_value("assignee"))
+        reviewer = attrs.get("reviewer", self._current_value("reviewer"))
 
-        assignee = attrs.get(
-            "assignee",
-            getattr(self.instance, "assignee", None),
-        )
-
-        reviewer = attrs.get(
-            "reviewer",
-            getattr(self.instance, "reviewer", None),
-        )
-
-        if assignee is not None:
-            if not board.members.filter(id=assignee.id).exists():
-                raise serializers.ValidationError(
-                    {
-                        "assignee_id":
-                            "Assignee must be a member of the board."
-                    }
-                )
-
-        if reviewer is not None:
-            if not board.members.filter(id=reviewer.id).exists():
-                raise serializers.ValidationError(
-                    {
-                        "reviewer_id":
-                            "Reviewer must be a member of the board."
-                    }
-                )
-
+        self.validate_board_member(board, assignee, "assignee_id")
+        self.validate_board_member(board, reviewer, "reviewer_id")
         return attrs
+
+    def _current_value(self, field_name):
+        if self.instance is None:
+            return None
+
+        return getattr(self.instance, field_name, None)
+
+    def validate_board_member(self, board, user, field_name):
+        if user is None:
+            return
+
+        if not board.members.filter(id=user.id).exists():
+            raise serializers.ValidationError(
+                {field_name: "User must be a member of the board."}
+            )
 
     def create(self, validated_data):
         request = self.context["request"]

@@ -14,6 +14,17 @@ from auth_app.api.serializers import (
 from auth_app.models import User
 
 
+def build_auth_response(user, status_code):
+    token, _ = Token.objects.get_or_create(user=user)
+    data = {
+        "token": token.key,
+        "fullname": user.fullname,
+        "email": user.email,
+        "user_id": user.id,
+    }
+    return Response(data, status=status_code)
+
+
 class RegistrationView(CreateAPIView):
     queryset = User.objects.all()
     serializer_class = RegistrationSerializer
@@ -23,16 +34,9 @@ class RegistrationView(CreateAPIView):
         serializer.is_valid(raise_exception=True)
         user = serializer.save()
 
-        token, created = Token.objects.get_or_create(user=user)
-
-        return Response(
-            {
-                "token": token.key,
-                "fullname": user.fullname,
-                "email": user.email,
-                "user_id": user.id,
-            },
-            status=status.HTTP_201_CREATED,
+        return build_auth_response(
+            user,
+            status.HTTP_201_CREATED,
         )
 
 
@@ -40,19 +44,11 @@ class LoginView(APIView):
     def post(self, request):
         serializer = LoginSerializer(data=request.data)
         serializer.is_valid(raise_exception=True)
-
         user = serializer.validated_data["user"]
 
-        token, created = Token.objects.get_or_create(user=user)
-
-        return Response(
-            {
-                "token": token.key,
-                "fullname": user.fullname,
-                "email": user.email,
-                "user_id": user.id,
-            },
-            status=status.HTTP_200_OK,
+        return build_auth_response(
+            user,
+            status.HTTP_200_OK,
         )
 
 
@@ -60,24 +56,26 @@ class EmailCheckView(APIView):
     permission_classes = [IsAuthenticated]
 
     def get(self, request):
-        serializer = EmailCheckSerializer(
-            data=request.query_params
-        )
+        serializer = EmailCheckSerializer(data=request.query_params)
         serializer.is_valid(raise_exception=True)
 
-        email = serializer.validated_data["email"]
-
-        try:
-            user = User.objects.get(email=email)
-        except User.DoesNotExist:
-            return Response(
-                {"detail": "Email not found."},
-                status=status.HTTP_404_NOT_FOUND,
-            )
-
-        response_serializer = UserSerializer(user)
+        user = self.get_user(serializer.validated_data["email"])
+        if user is None:
+            return self.email_not_found_response()
 
         return Response(
-            response_serializer.data,
+            UserSerializer(user).data,
             status=status.HTTP_200_OK,
+        )
+
+    def get_user(self, email):
+        try:
+            return User.objects.get(email=email)
+        except User.DoesNotExist:
+            return None
+
+    def email_not_found_response(self):
+        return Response(
+            {"detail": "Email not found."},
+            status=status.HTTP_404_NOT_FOUND,
         )
