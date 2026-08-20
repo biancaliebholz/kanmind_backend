@@ -3,13 +3,19 @@ from django.db import models
 
 
 class Task(models.Model):
+    """Represent a task assigned to a board."""
+
     class Status(models.TextChoices):
+        """Define the available task status values."""
+
         TO_DO = "to-do", "To Do"
         IN_PROGRESS = "in-progress", "In Progress"
         REVIEW = "review", "Review"
         DONE = "done", "Done"
 
     class Priority(models.TextChoices):
+        """Define the available task priority values."""
+
         LOW = "low", "Low"
         MEDIUM = "medium", "Medium"
         HIGH = "high", "High"
@@ -51,10 +57,13 @@ class Task(models.Model):
     due_date = models.DateField()
 
     def __str__(self):
+        """Return the task title as its string representation."""
         return self.title
 
 
 class Comment(models.Model):
+    """Represent a comment attached to a task."""
+
     task = models.ForeignKey(
         Task,
         on_delete=models.CASCADE,
@@ -71,4 +80,5 @@ class Comment(models.Model):
     created_at = models.DateTimeField(auto_now_add=True)
 
     def __str__(self):
+        """Return a shortened comment preview."""
         return self.content[:50]

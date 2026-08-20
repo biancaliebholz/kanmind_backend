@@ -2,4 +2,6 @@ from django.apps import AppConfig
 
 
 class TaskAppConfig(AppConfig):
-    name = 'task_app'
+    """Configure the tasks application."""
+
+    name = "task_app"

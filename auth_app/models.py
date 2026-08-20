@@ -4,7 +4,10 @@ from django.db import models
 
 
 class CustomUserManager(BaseUserManager):
+    """Manage creation of regular users and superusers."""
+
     def create_user(self, email, password=None, **extra_fields):
+        """Create and save a user with an email and password."""
         if not email:
             raise ValueError("The email must be set")
 
@@ -15,6 +18,7 @@ class CustomUserManager(BaseUserManager):
         return user
 
     def create_superuser(self, email, password=None, **extra_fields):
+        """Create and save a superuser with staff permissions."""
         extra_fields.setdefault("is_staff", True)
         extra_fields.setdefault("is_superuser", True)
 
@@ -28,6 +32,8 @@ class CustomUserManager(BaseUserManager):
 
 
 class User(AbstractUser):
+    """Represent a KanMind user authenticated by email."""
+
     username = None
     email = models.EmailField(unique=True)
     fullname = models.CharField(max_length=255)

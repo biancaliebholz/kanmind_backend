@@ -5,7 +5,11 @@ from task_app.models import Comment, Task
 
 
 class UserSerializer(serializers.ModelSerializer):
+    """Serialize basic user information."""
+
     class Meta:
+        """Configure fields exposed for a user."""
+
         model = User
         fields = [
             "id",
@@ -15,6 +19,8 @@ class UserSerializer(serializers.ModelSerializer):
 
 
 class TaskSerializer(serializers.ModelSerializer):
+    """Validate and serialize task data."""
+
     assignee = UserSerializer(read_only=True)
     reviewer = UserSerializer(read_only=True)
 
@@ -37,6 +43,8 @@ class TaskSerializer(serializers.ModelSerializer):
     comments_count = serializers.SerializerMethodField()
 
     class Meta:
+        """Configure fields used for task serialization."""
+
         model = Task
         fields = [
             "id",
@@ -54,9 +62,11 @@ class TaskSerializer(serializers.ModelSerializer):
         ]
 
     def get_comments_count(self, obj):
+        """Return the number of comments on a task."""
         return obj.comments.count()
 
     def validate(self, attrs):
+        """Validate assignee and reviewer board membership."""
         board = attrs.get("board", self._current_value("board"))
         assignee = attrs.get("assignee", self._current_value("assignee"))
         reviewer = attrs.get("reviewer", self._current_value("reviewer"))
@@ -66,12 +76,14 @@ class TaskSerializer(serializers.ModelSerializer):
         return attrs
 
     def _current_value(self, field_name):
+        """Return the current field value during task updates."""
         if self.instance is None:
             return None
 
         return getattr(self.instance, field_name, None)
 
     def validate_board_member(self, board, user, field_name):
+        """Validate that a selected user belongs to the board."""
         if user is None:
             return
 
@@ -81,6 +93,7 @@ class TaskSerializer(serializers.ModelSerializer):
             )
 
     def create(self, validated_data):
+        """Create a task and store its creator."""
         request = self.context["request"]
 
         return Task.objects.create(
@@ -89,6 +102,7 @@ class TaskSerializer(serializers.ModelSerializer):
         )
 
     def update(self, instance, validated_data):
+        """Update task fields without allowing board changes."""
         validated_data.pop("board", None)
 
         return super().update(
@@ -98,7 +112,11 @@ class TaskSerializer(serializers.ModelSerializer):
 
 
 class TaskUpdateSerializer(TaskSerializer):
+    """Serialize fields allowed during task updates."""
+
     class Meta(TaskSerializer.Meta):
+        """Configure fields accepted for task updates."""
+
         fields = [
             "id",
             "title",
@@ -114,12 +132,16 @@ class TaskUpdateSerializer(TaskSerializer):
 
 
 class CommentSerializer(serializers.ModelSerializer):
+    """Validate and serialize task comments."""
+
     author = serializers.CharField(
         source="author.fullname",
         read_only=True,
     )
 
     class Meta:
+        """Configure fields exposed for comments."""
+
         model = Comment
         fields = [
             "id",

@@ -5,6 +5,8 @@ from .models import User
 
 
 class CustomUserAdmin(UserAdmin):
+    """Configure the custom user model for the Django admin."""
+
     ordering = ("email",)
 
 

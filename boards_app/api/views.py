@@ -15,12 +15,15 @@ from boards_app.models import Board
 
 
 class BoardViewSet(ModelViewSet):
+    """Handle board CRUD operations and board access."""
+
     permission_classes = [
         IsAuthenticated,
         IsBoardMemberOrOwner,
     ]
 
     def get_queryset(self):
+        """Return boards accessible to the current user."""
         user = self.request.user
 
         if self.action == "list":
@@ -31,21 +34,18 @@ class BoardViewSet(ModelViewSet):
         return Board.objects.all()
 
     def get_serializer_class(self):
-        if self.action == "list":
-            return BoardListSerializer
-
-        if self.action == "create":
-            return BoardCreateSerializer
-
-        if self.action == "retrieve":
-            return BoardDetailSerializer
-
-        if self.action in ["update", "partial_update"]:
-            return BoardUpdateSerializer
-
-        return BoardListSerializer
+        """Return the serializer for the current board action."""
+        serializer_map = {
+            "list": BoardListSerializer,
+            "create": BoardCreateSerializer,
+            "retrieve": BoardDetailSerializer,
+            "update": BoardUpdateSerializer,
+            "partial_update": BoardUpdateSerializer,
+        }
+        return serializer_map.get(self.action, BoardListSerializer)
 
     def create(self, request, *args, **kwargs):
+        """Create a board and return its serialized data."""
         serializer = self.get_serializer(data=request.data)
         serializer.is_valid(raise_exception=True)
         board = serializer.save()
@@ -58,6 +58,7 @@ class BoardViewSet(ModelViewSet):
         )
 
     def destroy(self, request, *args, **kwargs):
+        """Delete a board and return an empty response."""
         board = self.get_object()
 
         board.delete()
